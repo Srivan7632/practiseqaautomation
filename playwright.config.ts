@@ -14,7 +14,9 @@ export default defineConfig({
   ],
   use: {
     headless: false,          // Headed mode: browser window is visible
-    slowMo: 3000,             // 3 sec pause between every action — looks like manual testing
+    launchOptions: {
+      slowMo: 3000,           // Slow browser operations for the visible demonstration.
+    },
     baseURL: 'https://www.practiceqaautomation.com',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
