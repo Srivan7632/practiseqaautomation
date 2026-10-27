@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { pauseForDemo } from '../support/demo';
 
 type TransactionType = 'all' | 'credit' | 'debit';
 
@@ -72,6 +73,8 @@ export class TransactionsPage {
       }
 
       if (await nextButton.isDisabled()) break;
+      // Keep each checked results page visible before moving to the next one.
+      await pauseForDemo(this.page);
       await nextButton.click();
       pageNumber++;
     }

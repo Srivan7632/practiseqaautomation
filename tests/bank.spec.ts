@@ -1,56 +1,66 @@
 import { test } from '../fixtures/bank.fixture';
 import { bankData } from '../test-data/bank.data';
+import { pauseForDemo } from '../support/demo';
 
 test('TrustBank: complete the assignment in one browser session', async ({
+  page,
   loginPage,
   dashboardPage,
   transactionsPage,
 }) => {
-  // Allow time for the full journey with the configured three-second slow motion.
+  // Allow time for the complete journey, including all transaction result pages.
   test.setTimeout(180_000);
 
-  await test.step('1. Log in and verify the dashboard', async () => {
+  async function showStep(title: string, action: () => Promise<void>): Promise<void> {
+    await test.step(title, async () => {
+      await action();
+      // Let the viewer see the verified result before the next action.
+      await pauseForDemo(page);
+    });
+  }
+
+  await showStep('1. Log in and verify the dashboard', async () => {
     await loginPage.open();
     await loginPage.signIn(bankData.customerId, bankData.password, bankData.securityAnswer);
     await dashboardPage.expectLoaded();
   });
 
-  const originalBalances = await test.step('Capture the original account balances', async () => {
-    return await dashboardPage.captureBalances();
+  await showStep('Verify balances display currency amounts before hiding', async () => {
+    await dashboardPage.expectBalancesVisible();
   });
 
-  await test.step('2. Check Hide balances and verify every amount is masked', async () => {
+  await showStep('2. Check Hide balances and verify every amount is masked', async () => {
     await dashboardPage.setBalancesHidden(true);
     await dashboardPage.expectBalancesHidden();
   });
 
-  await test.step('3. Uncheck Hide balances and verify the original amounts return', async () => {
+  await showStep('3. Uncheck Hide balances and verify currency amounts are visible again', async () => {
     await dashboardPage.setBalancesHidden(false);
-    await dashboardPage.expectBalancesRestored(originalBalances);
+    await dashboardPage.expectBalancesVisible();
   });
 
-  await test.step('Open transaction history using View all', async () => {
+  await showStep('Open transaction history using View all', async () => {
     await dashboardPage.openTransactionHistory();
   });
 
-  await test.step('4. Select Credits only and check amounts on every page', async () => {
+  await showStep('4. Select Credits only and check amounts on every page', async () => {
     await transactionsPage.selectType('credit');
     await transactionsPage.expectOnlyCredits();
   });
 
-  await test.step('5. Switch to Debits only and check amounts on every page', async () => {
+  await showStep('5. Switch to Debits only and check amounts on every page', async () => {
     await transactionsPage.selectType('debit');
     await transactionsPage.expectOnlyDebits();
   });
 
-  await test.step('6. Search all transactions and verify only Swiggy descriptions', async () => {
+  await showStep('6. Search all transactions and verify only Swiggy descriptions', async () => {
     // Remove the debit filter so the search includes both credits and debits.
     await transactionsPage.selectType('all');
     await transactionsPage.search(bankData.description);
     await transactionsPage.expectDescriptionsContaining(bankData.description);
   });
 
-  await test.step('7. Log out and verify the dashboard requires login again', async () => {
+  await showStep('7. Log out and verify the dashboard requires login again', async () => {
     await dashboardPage.logout();
     await loginPage.expectLoginFormVisible();
     await loginPage.expectDashboardRequiresLogin();

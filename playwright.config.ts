@@ -14,12 +14,10 @@ export default defineConfig({
   ],
   use: {
     headless: false,          // Headed mode: browser window is visible
-    launchOptions: {
-      slowMo: 3000,           // Slow browser operations for the visible demonstration.
-    },
     baseURL: 'https://www.practiceqaautomation.com',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    trace: 'retain-on-failure',
     actionTimeout: 15000,
     navigationTimeout: 30000,
   },

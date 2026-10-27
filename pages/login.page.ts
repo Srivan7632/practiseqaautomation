@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { pauseForDemo } from '../support/demo';
 
 export class LoginPage {
   constructor(private readonly page: Page) {}
@@ -6,16 +7,19 @@ export class LoginPage {
   async open(): Promise<void> {
     await this.page.goto('/apps/bank');
     await this.expectLoginFormVisible();
+    await pauseForDemo(this.page);
   }
 
   async signIn(customerId: string, password: string, securityAnswer: string): Promise<void> {
     await this.page.locator('#customer-id').fill(customerId);
     await this.page.locator('#bank-password').fill(password);
+    await pauseForDemo(this.page);
     await this.page.getByRole('button', { name: 'Continue', exact: true }).click();
 
     const answer = this.page.locator('#security-answer');
     await expect(answer, 'Security answer should be editable').toBeEditable();
     await answer.fill(securityAnswer);
+    await pauseForDemo(this.page);
     await this.page.getByRole('button', { name: 'Sign in', exact: true }).click();
   }
 

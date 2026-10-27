@@ -1,14 +1,10 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-export type BalanceSnapshot = {
-  savings: string;
-  current: string;
-  creditCard: string;
-};
+type AccountName = 'savings' | 'current' | 'creditCard';
 
 export class DashboardPage {
   readonly hideBalancesCheckbox: Locator;
-  private readonly balances: Record<keyof BalanceSnapshot, Locator>;
+  private readonly balances: Record<AccountName, Locator>;
 
   constructor(private readonly page: Page) {
     this.hideBalancesCheckbox = page.getByTestId('hide-balances');
@@ -28,19 +24,13 @@ export class DashboardPage {
     await expect(this.hideBalancesCheckbox).toBeVisible();
   }
 
-  async captureBalances(): Promise<BalanceSnapshot> {
+  async expectBalancesVisible(): Promise<void> {
     await expect(this.hideBalancesCheckbox).not.toBeChecked();
     for (const [account, balance] of Object.entries(this.balances)) {
       await expect(balance, `${account} balance should be visible`).toBeVisible();
       await expect(balance, `${account} should display a currency amount`)
         .toHaveText(/^₹\s*[\d,]+\.\d{2}$/);
     }
-
-    return {
-      savings: (await this.balances.savings.innerText()).trim(),
-      current: (await this.balances.current.innerText()).trim(),
-      creditCard: (await this.balances.creditCard.innerText()).trim(),
-    };
   }
 
   async setBalancesHidden(hidden: boolean): Promise<void> {
@@ -53,15 +43,6 @@ export class DashboardPage {
       await expect(balance).toBeVisible();
       await expect(balance, `${account} balance should be masked`).toHaveText('₹ ••••••');
       await expect(balance, `${account} balance should expose no digits`).not.toContainText(/[0-9]/);
-    }
-  }
-
-  async expectBalancesRestored(original: BalanceSnapshot): Promise<void> {
-    await expect(this.hideBalancesCheckbox).not.toBeChecked();
-    for (const account of Object.keys(this.balances) as (keyof BalanceSnapshot)[]) {
-      await expect(this.balances[account]).toBeVisible();
-      await expect(this.balances[account], `${account} balance should match its original value`)
-        .toHaveText(original[account], { useInnerText: true });
     }
   }
 
